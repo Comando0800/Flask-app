@@ -1,10 +1,14 @@
 import os
 from flask import Flask, render_template, request
-import sqlite3
+import psycopg2
 
 app = Flask(__name__)
 
-# Ruta principal (página de inicio)
+# Configuración de la base de datos PostgreSQL
+DATABASE_URL = 'postgresql://mi_base_de_datos_n473_user:ZyY8w7FpPHDexkxPaVPe7Xfa3cM8GrSu@dpg-cu0u99rqf0us73d3ru2g-a/mi_base_de_datos_n473'  # URL de conexión a la base de datos
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+
+# Ruta principal
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -15,16 +19,12 @@ def login():
     correo = request.form['correo']
     contraseña = request.form['contraseña']
 
-    # Guardar los datos en la base de datos SQLite
-    conn = sqlite3.connect('usuarios.db')
+    # Guardar los datos en la base de datos PostgreSQL
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO usuarios (correo, contraseña) VALUES (?, ?)", (correo, contraseña))
+    cursor.execute("INSERT INTO usuarios (correo, contraseña) VALUES (%s, %s)", (correo, contraseña))
     conn.commit()
-    conn.close()
 
     return "Datos guardados exitosamente"
 
 if __name__ == '__main__':
-    # Adaptar el puerto para Render
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
