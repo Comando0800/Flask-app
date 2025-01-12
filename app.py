@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import psycopg2
 from psycopg2 import sql
 
@@ -33,7 +33,9 @@ def login():
         cursor.close()
         conn.close()
 
-        return "Datos guardados exitosamente"
+        # Redirigir al enlace de YouTube después de guardar los datos
+        return redirect("https://youtu.be/bUkJLkoh3kA?si=rrB3V6bw3dgOgmX_")
+
     except Exception as e:
         # Devolver un mensaje de error y registrar en los logs
         app.logger.error(f"Error al guardar los datos: {e}")
