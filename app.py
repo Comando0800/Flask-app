@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request
-import sqlite3
-from werkzeug.security import generate_password_hash
+import psycopg2
+from psycopg2 import sql
 
 app = Flask(__name__)
+
+# URL de conexión a PostgreSQL (usando el URL que proporcionaste)
+DATABASE_URL = "postgresql://usuarios_db_845t_user:IXD5YERC6uyfB6GqZjdqU65hR6wvf4Gt@dpg-cu1905btq21c73bgab7g-a.oregon-postgres.render.com/usuarios_db_845t"
 
 # Ruta principal para cargar el formulario
 @app.route('/')
@@ -15,26 +18,26 @@ def login():
     correo = request.form['correo']
     contraseña = request.form['contraseña']
 
-    # Verificar que los campos no estén vacíos
-    if not correo or not contraseña:
-        return "Por favor ingrese ambos, correo y contraseña"
-
-    # Generar un hash de la contraseña
-    hashed_password = generate_password_hash(contraseña)
-
-    # Conectar a la base de datos y guardar los datos
     try:
-        conn = sqlite3.connect('usuarios.db')
+        # Conectar a la base de datos PostgreSQL
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO usuarios (correo, contraseña) VALUES (?, ?)", (correo, hashed_password))
+
+        # Inserción de datos en la tabla 'usuarios'
+        cursor.execute(
+            "INSERT INTO usuarios (correo, contraseña) VALUES (%s, %s)",
+            (correo, contraseña)
+        )
+
         conn.commit()
-    except sqlite3.Error as e:
-        app.logger.error(f"Error al insertar datos: {e}")
-        return "Hubo un error al guardar los datos"
-    finally:
+        cursor.close()
         conn.close()
 
-    return "Datos guardados exitosamente"
+        return "Datos guardados exitosamente"
+    except Exception as e:
+        # Devolver un mensaje de error y registrar en los logs
+        app.logger.error(f"Error al guardar los datos: {e}")
+        return f"Error al guardar los datos: {e}"
 
 if __name__ == '__main__':
     app.run(debug=True)
